@@ -4,9 +4,11 @@
 
 GhostDataSQL::GhostDataSQL()
 {
+
 }
 
 
 GhostDataSQL::~GhostDataSQL()
 {
+
 }
