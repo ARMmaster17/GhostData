@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Ghost
 {
@@ -53,37 +54,89 @@ namespace Ghost
     }*/
         namespace File
         {
-            public class GhostDataFile : GhostDataGeneric
+            class GhostDataFile : GhostDataGeneric
             {
-                string filePath;
+                //string filePath;
                 public GhostDataFile(string filepath)
                 {
+                    fileList = new List<GhostDataParseFile>();
                     fileIndex = 0;
+                    fileList[fileIndex] = new GhostDataParseFile(filepath);
                 }
                 public GhostDataFile(string filepath, int mode)
                 {
-
+                    fileList = new List<GhostDataParseFile>();
+                    fileIndex = 0;
+                    fileList[fileIndex] = new GhostDataParseFile(filepath, mode);
+                    if (mode == 2)
+                    {
+                        using (StreamReader sr = new StreamReader(filepath))
+                        {
+                            for (int i = 0; i > -1; i++)
+                            {
+                                fileList[fileIndex].lineList[i] = sr.ReadLine();
+                                fileList[fileIndex].parsedCheck[i] = true;
+                                if(sr.EndOfStream)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
                 public override GhostDataReturn fetch(int line)
                 {
+                    string resultString;
                     switch (fileList[fileIndex].fileMode)
                     {
                         case 0:
-                            GhostDataReturn rtn0 = new GhostDataReturn(0, "Nothing happened, the Generic namespace command was called");
+                            using (StreamReader sr = new StreamReader(fileList[fileIndex].filePath))
+                            {
+                                for (int i = 0; i < line; i++)
+                                {
+                                    try
+                                    {
+                                        sr.ReadLine();
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        throw new Exceptions.EndOfFile("Line does not exist", e);
+                                    }
+                                }
+                                try
+                                {
+                                    resultString = sr.ReadLine();
+                                }
+                                catch (Exception e)
+                                {
+                                    throw new Exceptions.EndOfFile("Line does not exist", e);
+                                }
+                            }
+                            GhostDataReturn rtn0 = new GhostDataReturn(0, resultString);
                             return rtn0;
                         case 1:
                             GhostDataReturn rtn1 = new GhostDataReturn(0, "Nothing happened, the Generic namespace command was called");
-                            return rtn1;
-                        case 2:
-                            GhostDataReturn rtn2;
                             if (fileList[fileIndex].parsedCheck[line])
                             {
-                                rtn2 = new GhostDataReturn(0, "Nothing happened, the Generic namespace command was called");
+                                rtn1 = new GhostDataReturn(0, "Nothing happened, the Generic namespace command was called");
                             }
                             else
                             {
-                                rtn2 = new GhostDataReturn(0, "Nothing happened, the Generic namespace command was called");
+                                rtn1 = new GhostDataReturn(0, "Nothing happened, the Generic namespace command was called");
                             }
+                            return rtn1;
+                        case 2:
+                            GhostDataReturn rtn2;
+                            string result;
+                            try
+                            {
+                                result = fileList[fileIndex].lineList[line];
+                            }
+                            catch (Exception e)
+                            {
+                                throw new Exceptions.EndOfFile("Line does not exist", e);
+                            }
+                            rtn2 = new GhostDataReturn(0, result);
                             return rtn2;
                         default:
                             GhostDataReturn rtn = new GhostDataReturn(0, "Nothing happened, the Generic namespace command was called");
@@ -97,7 +150,7 @@ namespace Ghost
                 }
             }
         }
-        private class GhostDataGeneric
+        class GhostDataGeneric
         {
             public int fileIndex;
             public List<GhostDataParseFile> fileList;
@@ -105,12 +158,12 @@ namespace Ghost
             {
 
             }
-            public GhostDataReturn fetch()
+            public virtual GhostDataReturn fetch(int line)
             {
                 GhostDataReturn rtn = new GhostDataReturn(-1, "Nothing happened, the Generic namespace command was called");
                 return rtn;
             }
-            public GhostDataReturn put()
+            public virtual GhostDataReturn put()
             {
                 GhostDataReturn rtn = new GhostDataReturn(-1, "Nothing happened, the Generic namespace command was called");
                 return rtn;
@@ -141,13 +194,11 @@ namespace Ghost
                 {
 
                 }
-                public FileNotIndexed(string message)
-                    : base(message)
+                public FileNotIndexed(string message) : base(message)
                 {
 
                 }
-                public FileNotIndexed(string message, Exception inner)
-                    : base(message, inner)
+                public FileNotIndexed(string message, Exception inner) : base(message, inner)
                 {
 
                 }
@@ -158,13 +209,26 @@ namespace Ghost
                 {
 
                 }
-                public ReadError(string message)
-                    : base(message)
+                public ReadError(string message) : base(message)
                 {
 
                 }
-                public ReadError(string message, Exception inner)
-                    : base(message, inner)
+                public ReadError(string message, Exception inner) : base(message, inner)
+                {
+
+                }
+            }
+            public class EndOfFile : System.Exception
+            {
+                public EndOfFile()
+                {
+
+                }
+                public EndOfFile(string message) : base(message)
+                {
+
+                }
+                public EndOfFile(string message, Exception inner) : base(message, inner)
                 {
 
                 }
@@ -180,12 +244,26 @@ namespace Ghost
                 content = ct;
             }
         }
-        private struct GhostDataParseFile
+        struct GhostDataParseFile
         {
             public string filePath;
             public int fileMode;
             public List<string> lineList;
             public List<bool> parsedCheck;
+            public GhostDataParseFile(string filepath)
+            {
+                filePath = filepath;
+                fileMode = 0;
+                lineList = new List<string>();
+                parsedCheck = new List<bool>();
+            }
+            public GhostDataParseFile(string filepath, int filemode)
+            {
+                filePath = filepath;
+                fileMode = filemode;
+                lineList = new List<string>();
+                parsedCheck = new List<bool>();
+            }
         }
     }
 }
